@@ -12,25 +12,18 @@ services:
       - app-network
     restart: always
 
-
   server1:
-    build: ./server1
-    ports:
-      - "4300:4300"
+    build: ./server
     networks:
       - app-network
 
   server2:
-    build: ./server2
-    ports:
-      - "4400:4400"
+    build: ./server
     networks:
       - app-network
-
+  
   server3:
-    build: ./server3
-    ports:
-      - "4500:4500"
+    build: ./server
     networks:
       - app-network
 

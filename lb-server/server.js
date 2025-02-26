@@ -5,7 +5,7 @@ const axios = require("axios");
 
 app.use(express.json());
 
-const servers = ["http://server1:4300", "http://server2:4400", "http://server3:4500"];
+const servers = ["http://server1:4300", "http://server2:4300", "http://server3:4300"];
 let counter = 0;
 
 app.get("/", (req, res) => {
