@@ -13,4 +13,5 @@ COPY . .
 
 # Expose port and start app
 EXPOSE 4200
-CMD ["node", "server.js"]
+CMD ["npm", "run", "dev"]
+
