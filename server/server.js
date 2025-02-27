@@ -4,6 +4,11 @@ const PORT = 4300;
 
 app.use(express.json());
 
+app.get("/health", (req, res) => {
+  console.log(200, 'ok')
+  res.status(200).send('OK');
+});
+
 app.post("/receive", (req, res) => {
   const { message } = req.body;
 
