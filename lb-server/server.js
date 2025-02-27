@@ -2,19 +2,21 @@ const express = require("express");
 const app = express();
 const PORT = 4200;
 const axios = require("axios");
+const Registry = require('./registry');
 
 app.use(express.json());
-
-const servers = ["http://server1:4300", "http://server2:4300", "http://server3:4300"];
-let counter = 0;
 
 app.get("/", (req, res) => {
   res.send("Hello from Docker!");
 });
 
+let counter = 0;
+
 app.post("/lb", async (req, res) => {
   try {
-    const target = servers[counter % servers.length];
+    const registry = new Registry()
+    const allActiveServers = registry.getAllActiveServerUrls();
+    const target = allActiveServers[counter % allActiveServers.length];
     counter++;
     console.log(`Forwarding request to: ${target}`);
 
