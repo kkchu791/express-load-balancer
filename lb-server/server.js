@@ -28,15 +28,11 @@ const getServerHealth = async () => {
       response = {status: 503};
     }
 
-    console.log(serverData, 'serverData')
     if (response.status === 200) {
-      console.log("reset")
       registryInstance.resetFailureCount(server);
     } else if (serverData['failure_count'] >= 3) {
-      console.log("deregister")
       registryInstance.deregisterServer(server);
     } else {
-      console.log("incrementFailureCount")
       registryInstance.incrementFailureCount(server);
     }
   });
@@ -58,6 +54,44 @@ app.post("/lb", async (req, res) => {
     console.error("Error forwarding request:", error.message);
   }
 });
+
+app.get("/receive", (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+  
+    console.log(`Received message: ${message}`);
+    res.json({ status: "Message received", received: message });
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+  
+});
+
+app.post("/register", (req, res) => {
+  try {
+    const { serverData } = req.body;
+
+    if (!serverData) {
+      return res.status(400).json({ error: "serverData is required" });
+    }
+
+    const isRegistered = registryInstance.register(serverData);
+
+    if (isRegistered) {
+      res.json({ status: "Server registered" });
+    } else {
+      res.json({ status: "Server unregistered"});
+    }
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+});
+
+  
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

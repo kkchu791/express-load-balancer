@@ -2,29 +2,7 @@ const { HEALTH_STATUS } = require('./constants/health_status');
 
 class Registry {
     constructor() {
-        this.registry = {
-            'server1': {
-                'ip_address': 'server1',
-                'port': '4300',
-                'last_heartbeat_timestamp:': new Date(),
-                'health_status': HEALTH_STATUS.HEALTHY,
-                'failure_count': 0,
-            },
-            'server2': {
-                'ip_address': 'server2',
-                'port': '4300',
-                'last_heartbeat_timestamp:': new Date(),
-                'health_status': HEALTH_STATUS.HEALTHY,
-                'failure_count': 0,
-            },
-            'server3': {
-                'ip_address': 'server3',
-                'port': '4300',
-                'last_heartbeat_timestamp:': new Date(),
-                'health_status': HEALTH_STATUS.HEALTHY,
-                'failure_count': 0,
-            },
-        }
+        this.registry = {}
     }
 
     getAllServers() {
@@ -43,15 +21,31 @@ class Registry {
     }
 
     deregisterServer(server) {
-        console.log(server, 'is being removed from the registry');
         delete this.registry[server];
         return true;
     }
 
     incrementFailureCount(server) {
-        console.log(server, 'is incrementing failure count');
         this.registry[server]['failure_count']++;
         return true;
+    }
+
+    register(serverData){
+        try {
+            const {ip_address, port} = serverData;
+
+            this.registry[ip_address] = {
+                'ip_address': ip_address,
+                'port': port,
+                'last_heartbeat_timestamp:': new Date(),
+                'health_status': HEALTH_STATUS.HEALTHY,
+                'failure_count': 0,
+            };
+
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 }
 
