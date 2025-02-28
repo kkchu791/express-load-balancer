@@ -6,6 +6,11 @@ const registryInstance = require('./registry');
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+  req.realIP = req.ip.includes('::ffff:') ? req.ip.split('::ffff:')[1] : req.ip;
+  next();
+});  
+
 app.get("/", (req, res) => {
   res.send("Hello from Docker!");
 });
@@ -28,15 +33,11 @@ const getServerHealth = async () => {
       response = {status: 503};
     }
 
-    console.log(serverData, 'serverData')
     if (response.status === 200) {
-      console.log("reset")
       registryInstance.resetFailureCount(server);
     } else if (serverData['failure_count'] >= 3) {
-      console.log("deregister")
       registryInstance.deregisterServer(server);
     } else {
-      console.log("incrementFailureCount")
       registryInstance.incrementFailureCount(server);
     }
   });
@@ -54,6 +55,36 @@ app.post("/lb", async (req, res) => {
     const response = await axios.post(`${target}/receive`, req.body);
 
     res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+});
+
+app.get("/receive", (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+  
+    console.log(`Received message: ${message}`);
+    res.json({ status: "Message received", received: message });
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+  
+});
+
+app.post("/register", (req, res) => {
+  try {
+    const isRegistered = registryInstance.register(req.realIP);
+
+    if (isRegistered) {
+      res.json({ status: "Server registered" });
+    } else {
+      res.json({ status: "Server unregistered"});
+    }
   } catch (error) {
     console.error("Error forwarding request:", error.message);
   }

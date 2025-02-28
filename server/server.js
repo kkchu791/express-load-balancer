@@ -1,8 +1,26 @@
 const express = require("express");
 const app = express();
-const PORT = 4300;
+const PORT = 80;
+const axios = require("axios");
+const os = require('os');
+require('dotenv').config();
 
 app.use(express.json());
+
+const selfRegisterWithLoadBalancer = async () => {
+  try {
+    const response = await axios.post(`${process.env.LOAD_BALANCER_URL}/register`);
+  
+    console.log(response['status']);
+  } catch (e) {
+    console.error("Self-register: Error forwarding register request:", e.message);
+  }
+};
+
+setTimeout(async () => {
+  await selfRegisterWithLoadBalancer();
+}, 1000);
+
 
 app.get("/health", (req, res) => {
   console.log(200, 'ok')

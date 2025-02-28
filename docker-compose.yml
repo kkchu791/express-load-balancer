@@ -4,10 +4,6 @@ services:
     build: ./lb-server
     ports:
       - "4200:4200"
-    depends_on:
-      - server1
-      - server2
-      - server3
     networks:
       - app-network
     restart: always

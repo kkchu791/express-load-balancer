@@ -9,8 +9,8 @@ COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
 
-# Expose port 4300
-EXPOSE 4300
+# Expose port 80
+EXPOSE 80
 
 # Start the app
 CMD ["npm", "run", "dev"]
