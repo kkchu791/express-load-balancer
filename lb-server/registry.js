@@ -1,4 +1,5 @@
 const { HEALTH_STATUS } = require('./constants/health_status');
+const { PORT } = require('./constants/port');
 
 class Registry {
     constructor() {
@@ -30,13 +31,11 @@ class Registry {
         return true;
     }
 
-    register(serverData){
+    register(ip_address){
         try {
-            const {ip_address, port} = serverData;
-
             this.registry[ip_address] = {
                 'ip_address': ip_address,
-                'port': port,
+                'port': PORT.HTTP,
                 'last_heartbeat_timestamp:': new Date(),
                 'health_status': HEALTH_STATUS.HEALTHY,
                 'failure_count': 0,

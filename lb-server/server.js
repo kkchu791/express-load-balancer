@@ -6,6 +6,11 @@ const registryInstance = require('./registry');
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+  req.realIP = req.ip.includes('::ffff:') ? req.ip.split('::ffff:')[1] : req.ip;
+  next();
+});  
+
 app.get("/", (req, res) => {
   res.send("Hello from Docker!");
 });
@@ -73,13 +78,7 @@ app.get("/receive", (req, res) => {
 
 app.post("/register", (req, res) => {
   try {
-    const { serverData } = req.body;
-
-    if (!serverData) {
-      return res.status(400).json({ error: "serverData is required" });
-    }
-
-    const isRegistered = registryInstance.register(serverData);
+    const isRegistered = registryInstance.register(req.realIP);
 
     if (isRegistered) {
       res.json({ status: "Server registered" });
@@ -90,8 +89,6 @@ app.post("/register", (req, res) => {
     console.error("Error forwarding request:", error.message);
   }
 });
-
-  
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
