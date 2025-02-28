@@ -3,6 +3,7 @@ const app = express();
 const PORT = 4200;
 const axios = require("axios");
 const registryInstance = require('./registry');
+const proxy = require('express-http-proxy');
 
 app.use(express.json());
 
@@ -11,8 +12,17 @@ app.use((req, res, next) => {
   next();
 });  
 
-app.get("/", (req, res) => {
-  res.send("Hello from Docker!");
+let counter = 0;
+app.use('/', (req, res, next) => {
+  const allActiveServers = registryInstance.getAllActiveServerUrls();
+  const target = allActiveServers[counter % allActiveServers.length];
+  const fullUrl = target + req.originalUrl
+  counter++;
+
+  if (fullUrl) {
+    proxy(fullUrl)(req, res, next);
+    next();
+  }
 });
 
 setInterval(async () => {
@@ -42,39 +52,6 @@ const getServerHealth = async () => {
     }
   });
 }
-
-
-app.post("/lb", async (req, res) => {
-  try {
-    let counter = 0;
-    const allActiveServers = registryInstance.getAllActiveServerUrls();
-    const target = allActiveServers[counter % allActiveServers.length];
-    counter++;
-    console.log(`Forwarding request to: ${target}`);
-
-    const response = await axios.post(`${target}/receive`, req.body);
-
-    res.status(response.status).json(response.data);
-  } catch (error) {
-    console.error("Error forwarding request:", error.message);
-  }
-});
-
-app.get("/receive", (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
-    }
-  
-    console.log(`Received message: ${message}`);
-    res.json({ status: "Message received", received: message });
-  } catch (error) {
-    console.error("Error forwarding request:", error.message);
-  }
-  
-});
 
 app.post("/register", (req, res) => {
   try {
