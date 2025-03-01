@@ -34,7 +34,7 @@ app.post("/receive", (req, res) => {
     }
   
     console.log(`Received message: ${message}`);
-    res.json({ status: "Message received", received: message });
+    res.status(200).json({ status: "Message received", received: message });
   } catch (e) {
     console.log(e, 'error')
   }

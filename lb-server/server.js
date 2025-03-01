@@ -3,7 +3,6 @@ const app = express();
 const PORT = 4200;
 const axios = require("axios");
 const registryInstance = require('./registry');
-const proxy = require('express-http-proxy');
 
 app.use(express.json());
 
@@ -11,19 +10,6 @@ app.use((req, res, next) => {
   req.realIP = req.ip.includes('::ffff:') ? req.ip.split('::ffff:')[1] : req.ip;
   next();
 });  
-
-let counter = 0;
-app.use('/', (req, res, next) => {
-  const allActiveServers = registryInstance.getAllActiveServerUrls();
-  const target = allActiveServers[counter % allActiveServers.length];
-  const fullUrl = target + req.originalUrl
-  counter++;
-
-  if (fullUrl) {
-    proxy(fullUrl)(req, res, next);
-    next();
-  }
-});
 
 setInterval(async () => {
   await getServerHealth();
@@ -62,6 +48,28 @@ app.post("/register", (req, res) => {
     } else {
       res.json({ status: "Server unregistered"});
     }
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+});
+
+let counter = 0;
+app.all("*", async (req, res) => {
+  try {
+    const allActiveServers = registryInstance.getAllActiveServerUrls();
+    const target = allActiveServers[counter % allActiveServers.length];
+    const fullUrl = target + req.originalUrl
+    counter++;
+ 
+    delete req.headers['content-length']
+    const response = await axios({
+      method: req.method,
+      url: fullUrl,
+      headers: req.headers,
+      data: req.body
+    });
+
+    res.json({ status: response.status });
   } catch (error) {
     console.error("Error forwarding request:", error.message);
   }
