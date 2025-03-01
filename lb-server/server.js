@@ -11,10 +11,6 @@ app.use((req, res, next) => {
   next();
 });  
 
-app.get("/", (req, res) => {
-  res.send("Hello from Docker!");
-});
-
 setInterval(async () => {
   await getServerHealth();
 }, 10000);
@@ -43,39 +39,6 @@ const getServerHealth = async () => {
   });
 }
 
-
-app.post("/lb", async (req, res) => {
-  try {
-    let counter = 0;
-    const allActiveServers = registryInstance.getAllActiveServerUrls();
-    const target = allActiveServers[counter % allActiveServers.length];
-    counter++;
-    console.log(`Forwarding request to: ${target}`);
-
-    const response = await axios.post(`${target}/receive`, req.body);
-
-    res.status(response.status).json(response.data);
-  } catch (error) {
-    console.error("Error forwarding request:", error.message);
-  }
-});
-
-app.get("/receive", (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
-    }
-  
-    console.log(`Received message: ${message}`);
-    res.json({ status: "Message received", received: message });
-  } catch (error) {
-    console.error("Error forwarding request:", error.message);
-  }
-  
-});
-
 app.post("/register", (req, res) => {
   try {
     const isRegistered = registryInstance.register(req.realIP);
@@ -85,6 +48,28 @@ app.post("/register", (req, res) => {
     } else {
       res.json({ status: "Server unregistered"});
     }
+  } catch (error) {
+    console.error("Error forwarding request:", error.message);
+  }
+});
+
+let counter = 0;
+app.all("*", async (req, res) => {
+  try {
+    const allActiveServers = registryInstance.getAllActiveServerUrls();
+    const target = allActiveServers[counter % allActiveServers.length];
+    const fullUrl = target + req.originalUrl
+    counter++;
+ 
+    delete req.headers['content-length']
+    const response = await axios({
+      method: req.method,
+      url: fullUrl,
+      headers: req.headers,
+      data: req.body
+    });
+
+    res.json({ status: response.status });
   } catch (error) {
     console.error("Error forwarding request:", error.message);
   }
